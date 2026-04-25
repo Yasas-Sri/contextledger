@@ -51,6 +51,7 @@ app.add_middleware(
 )
 
 
+# ── Write (PROTECTED) ─────────────────────────────────────────────────────────
 
 @app.post("/memory", response_model=MemoryEntryResponse, tags=["Memory"])
 def write_memory(entry: MemoryEntry, _key: str = Security(require_api_key)):
@@ -59,6 +60,7 @@ def write_memory(entry: MemoryEntry, _key: str = Security(require_api_key)):
     return MemoryEntryResponse(id=entry_id, message="Memory stored successfully.")
 
 
+# ── Read single entry (PUBLIC) ────────────────────────────────────────────────
 
 @app.get("/memory/{entry_id}", response_model=SearchResult, tags=["Memory"])
 def get_memory(entry_id: str = Path(...)):
@@ -66,7 +68,7 @@ def get_memory(entry_id: str = Path(...)):
     return get_or_404(entry_id)
 
 
-
+# ── Search (PUBLIC) ───────────────────────────────────────────────────────────
 
 @app.get("/search", response_model=list[SearchResult], tags=["Memory"])
 def search_memory(
@@ -88,7 +90,7 @@ def search_memory(
     )
 
 
-
+# ── Timeline (PUBLIC) ─────────────────────────────────────────────────────────
 
 @app.get("/timeline", response_model=list[SearchResult], tags=["Memory"])
 def get_timeline(
@@ -98,7 +100,7 @@ def get_timeline(
     return MEMORY_STORE.get_all(limit=limit, include_deprecated=include_deprecated)
 
 
-
+# ── Vote (PROTECTED) ──────────────────────────────────────────────────────────
 
 @app.post("/memory/{entry_id}/vote", response_model=SearchResult, tags=["Lifecycle"])
 def vote_memory(
@@ -115,6 +117,7 @@ def vote_memory(
     return updated
 
 
+# ── Deprecate (PROTECTED) ─────────────────────────────────────────────────────
 
 @app.post("/memory/{entry_id}/deprecate", response_model=MemoryEntryResponse, tags=["Lifecycle"])
 def deprecate_memory(
@@ -132,6 +135,7 @@ def deprecate_memory(
     return MemoryEntryResponse(id=entry_id, message="Memory deprecated.")
 
 
+# ── Update / new version (PROTECTED) ─────────────────────────────────────────
 
 @app.post("/memory/{entry_id}/update", response_model=MemoryEntryResponse, tags=["Lifecycle"])
 def update_memory(
@@ -155,7 +159,7 @@ def update_memory(
     return MemoryEntryResponse(id=new_id, message=f"New version stored. Old entry superseded.")
 
 
-
+# ── Stats (PUBLIC) ────────────────────────────────────────────────────────────
 
 @app.get("/stats", tags=["Meta"])
 def get_stats():
@@ -168,6 +172,7 @@ def get_stats():
     }
 
 
+# ── Serve frontend (PUBLIC) ───────────────────────────────────────────────────
 
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 

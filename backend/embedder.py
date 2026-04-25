@@ -2,15 +2,17 @@
 embedder.py — Local embedding using sentence-transformers.
 
 Model loading priority:
-  1. ./models/all-MiniLM-L6-v2  
-  2. HuggingFace download        
+  1. ./models/all-MiniLM-L6-v2  (local, baked into Docker image — fully offline)
+  2. HuggingFace download        (fallback for first-run dev, requires internet)
+
+Run download_model.py once before building Docker to guarantee offline operation.
 """
 
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "all-MiniLM-L6-v2"
-
+# Local path relative to this file — works both in dev and inside Docker
 _LOCAL_MODEL_PATH = Path(__file__).parent.parent / "models" / MODEL_NAME
 
 _model = None
