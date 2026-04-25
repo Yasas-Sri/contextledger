@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContextLedger Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #7fff6e;
+    --accent2: #6eb8ff;
+    --accent3: #ff6eb4;
+    --text: #e8e8f0;
+    --muted: #555570;
+    --debugger: #ff6e6e;
+    --researcher: #6eb8ff;
+    --optimizer: #7fff6e;
+    --bug_fix: #ff9f6e;
+    --insight: #c06eff;
+    --solution: #6effd4;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid bg ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(127,255,110,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(127,255,110,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative;
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(12px);
+    background: rgba(10,10,15,0.85);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(127,255,110,0.3);
+  }
+
+  .logo h1 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo p {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .stat {
+    text-align: right;
+  }
+
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: calc(100vh - 77px);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: rgba(10,10,15,0.5);
+  }
+
+  .sidebar h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .search-box {
+    position: relative;
+  }
+
+  .search-box input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px 10px 36px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(127,255,110,0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+    background: transparent;
+  }
+
+  .pill:hover { border-color: var(--text); color: var(--text); }
+
+  .pill.active-debugger  { border-color: var(--debugger);  color: var(--debugger);  background: rgba(255,110,110,0.08); }
+  .pill.active-researcher{ border-color: var(--researcher);color: var(--researcher);background: rgba(110,184,255,0.08); }
+  .pill.active-optimizer { border-color: var(--optimizer); color: var(--optimizer); background: rgba(127,255,110,0.08); }
+  .pill.active-bug_fix   { border-color: var(--bug_fix);   color: var(--bug_fix);   background: rgba(255,159,110,0.08); }
+  .pill.active-insight   { border-color: var(--insight);   color: var(--insight);   background: rgba(192,110,255,0.08); }
+  .pill.active-solution  { border-color: var(--solution);  color: var(--solution);  background: rgba(110,255,212,0.08); }
+
+  .search-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .search-btn:hover {
+    background: #a0ffaa;
+    box-shadow: 0 0 20px rgba(127,255,110,0.4);
+  }
+
+  .clear-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .clear-btn:hover { border-color: var(--text); color: var(--text); }
+
+  .write-section {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .write-section textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    resize: vertical;
+    min-height: 70px;
+    transition: border-color 0.2s;
+  }
+
+  .write-section textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(127,255,110,0.1);
+  }
+
+  .write-section select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .write-btn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .write-btn:hover {
+    background: rgba(110,184,255,0.1);
+    box-shadow: 0 0 20px rgba(110,184,255,0.2);
+  }
+
+  /* ── Main panel ── */
+  .main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .mode-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: rgba(127,255,110,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(127,255,110,0.2);
+    letter-spacing: 1px;
+  }
+
+  .mode-badge.search-mode {
+    background: rgba(110,184,255,0.1);
+    color: var(--accent2);
+    border-color: rgba(110,184,255,0.2);
+  }
+
+  .timeline {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── Memory Card ── */
+  .memory-card {
+    position: relative;
+    padding: 18px 20px 18px 28px;
+    border-left: 2px solid var(--border);
+    margin-left: 8px;
+    animation: fadeIn 0.3s ease forwards;
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .memory-card::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 22px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+
+  .memory-card.agent-debugger  { border-color: var(--debugger); }
+  .memory-card.agent-researcher{ border-color: var(--researcher); }
+  .memory-card.agent-optimizer { border-color: var(--optimizer); }
+
+  .memory-card.agent-debugger::before  { background: var(--debugger); }
+  .memory-card.agent-researcher::before{ background: var(--researcher); }
+  .memory-card.agent-optimizer::before { background: var(--optimizer); }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .agent-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .agent-badge.agent-debugger  { color: var(--debugger); }
+  .agent-badge.agent-researcher{ color: var(--researcher); }
+  .agent-badge.agent-optimizer { color: var(--optimizer); }
+
+  .type-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .type-badge.bug_fix   { background: rgba(255,159,110,0.15); color: var(--bug_fix); }
+  .type-badge.insight   { background: rgba(192,110,255,0.15); color: var(--insight); }
+  .type-badge.solution  { background: rgba(110,255,212,0.15); color: var(--solution); }
+
+  .card-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .score-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(127,255,110,0.08);
+    border: 1px solid rgba(127,255,110,0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .card-content {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Empty / Loading ── */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .empty-state .big {
+    font-size: 40px;
+    opacity: 0.3;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    box-shadow: 0 0 24px rgba(127,255,110,0.2);
+    z-index: 100;
+    animation: slideUp 0.2s ease;
+    transition: opacity 0.3s;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">CL</div>
+    <div>
+      <h1>ContextLedger Lite</h1>
+      <p>Shared Agent Memory · Powered by VectorAI DB</p>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat">
+      <div class="stat-val" id="total-count">—</div>
+      <div class="stat-label">memories</div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <h2>🔍 Search</h2>
+
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" placeholder="e.g. database latency fix..." />
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">Agent</div>
+      <div class="filter-pills" id="agent-pills">
+        <div class="pill" data-filter="agent" data-val="agent-debugger">debugger</div>
+        <div class="pill" data-filter="agent" data-val="agent-researcher">researcher</div>
+        <div class="pill" data-filter="agent" data-val="agent-optimizer">optimizer</div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">Type</div>
+      <div class="filter-pills" id="type-pills">
+        <div class="pill" data-filter="type" data-val="bug_fix">bug fix</div>
+        <div class="pill" data-filter="type" data-val="insight">insight</div>
+        <div class="pill" data-filter="type" data-val="solution">solution</div>
+      </div>
+    </div>
+
+    <button class="search-btn" onclick="doSearch()">Search Memory</button>
+    <button class="clear-btn" onclick="clearSearch()">Clear · Show Timeline</button>
+
+    <div class="write-section">
+      <h2>✏️ Write Memory</h2>
+      <select id="write-agent">
+        <option value="agent-debugger">agent-debugger</option>
+        <option value="agent-researcher">agent-researcher</option>
+        <option value="agent-optimizer">agent-optimizer</option>
+      </select>
+      <select id="write-type">
+        <option value="bug_fix">bug_fix</option>
+        <option value="insight">insight</option>
+        <option value="solution">solution</option>
+      </select>
+      <textarea id="write-content" placeholder="Describe what was discovered..."></textarea>
+      <button class="write-btn" onclick="writeMemory()">Store Memory →</button>
+    </div>
+
+  </aside>
+
+  <!-- Main Timeline -->
+  <main class="main">
+    <div class="panel-header">
+      <span class="panel-title" id="panel-title">Shared Memory Timeline</span>
+      <span class="mode-badge" id="mode-badge">LIVE FEED</span>
+    </div>
+
+    <div class="timeline" id="timeline">
+      <div class="empty-state">
+        <div class="big">◎</div>
+        <div>Loading shared memory...</div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  const API = 'http://localhost:8000';
+  let activeAgent = null;
+  let activeType = null;
+  let isSearchMode = false;
+
+  
+  document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const filter = pill.dataset.filter;
+      const val = pill.dataset.val;
+
+      if (filter === 'agent') {
+        if (activeAgent === val) {
+          activeAgent = null;
+          pill.className = 'pill';
+        } else {
+          document.querySelectorAll('[data-filter="agent"]').forEach(p => p.className = 'pill');
+          activeAgent = val;
+          pill.className = `pill active-${val}`;
+        }
+      } else {
+        if (activeType === val) {
+          activeType = null;
+          pill.className = 'pill';
+        } else {
+          document.querySelectorAll('[data-filter="type"]').forEach(p => p.className = 'pill');
+          activeType = val;
+          pill.className = `pill active-${val}`;
+        }
+      }
+    });
+  });
+
+
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  
+  async function loadTimeline() {
+    try {
+      const res = await fetch(`${API}/timeline?limit=50`);
+      const data = await res.json();
+      renderCards(data, false);
+
+      const stats = await fetch(`${API}/stats`);
+      const s = await stats.json();
+      document.getElementById('total-count').textContent = s.total_memories;
+    } catch(e) {
+      document.getElementById('timeline').innerHTML = `
+        <div class="empty-state">
+          <div class="big">⚠</div>
+          <div>Cannot reach API at ${API}</div>
+          <div style="font-size:11px; margin-top:4px;">Run: cd backend && uvicorn main:app --reload</div>
+        </div>`;
+    }
+  }
+
+  // ── Search ──────────────────────────────────────────────────────────────
+  async function doSearch() {
+    const q = document.getElementById('search-input').value.trim();
+    if (!q && !activeAgent && !activeType) { clearSearch(); return; }
+
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (activeAgent) params.set('agent_id', activeAgent);
+    if (activeType) params.set('entry_type', activeType);
+    params.set('limit', '10');
+
+    isSearchMode = true;
+    document.getElementById('mode-badge').textContent = 'SEARCH RESULTS';
+    document.getElementById('mode-badge').className = 'mode-badge search-mode';
+    document.getElementById('panel-title').textContent =
+      q ? `Results for "${q}"` : 'Filtered Results';
+
+    try {
+      const res = await fetch(`${API}/search?${params}`);
+      const data = await res.json();
+      renderCards(data, true);
+    } catch(e) {
+      showToast('API not reachable');
+    }
+  }
+
+  // ── Clear ───────────────────────────────────────────────────────────────
+  function clearSearch() {
+    document.getElementById('search-input').value = '';
+    activeAgent = null; activeType = null;
+    document.querySelectorAll('.pill').forEach(p => p.className = 'pill');
+    isSearchMode = false;
+    document.getElementById('mode-badge').textContent = 'LIVE FEED';
+    document.getElementById('mode-badge').className = 'mode-badge';
+    document.getElementById('panel-title').textContent = 'Shared Memory Timeline';
+    loadTimeline();
+  }
+
+  // ── Write memory ─────────────────────────────────────────────────────────
+  async function writeMemory() {
+    const content = document.getElementById('write-content').value.trim();
+    if (!content) { showToast('Enter memory content first'); return; }
+
+    const entry = {
+      agent_id: document.getElementById('write-agent').value,
+      entry_type: document.getElementById('write-type').value,
+      content,
+      tags: [],
+      version: 1,
+    };
+
+    try {
+      const res = await fetch(`${API}/memory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      });
+      if (res.ok) {
+        document.getElementById('write-content').value = '';
+        showToast('Memory stored ✓');
+        if (!isSearchMode) loadTimeline();
+      }
+    } catch(e) {
+      showToast('API not reachable');
+    }
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  function renderCards(entries, withScore) {
+    const container = document.getElementById('timeline');
+    if (!entries.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="big">∅</div>
+          <div>No memories found</div>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = entries.map((e, i) => {
+      const agentClass = e.agent_id.replace('agent-', 'agent-');
+      const time = new Date(e.timestamp).toLocaleString([], {
+        month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      const tags = e.tags.map(t => `<span class="tag">#${t}</span>`).join('');
+      const score = withScore
+        ? `<span class="score-badge">↑ ${(e.score * 100).toFixed(0)}%</span>` : '';
+      const v = e.version > 1 ? `<span class="tag">v${e.version}</span>` : '';
+
+      return `
+        <div class="memory-card ${agentClass}" style="animation-delay:${i * 40}ms">
+          <div class="card-meta">
+            <span class="agent-badge ${agentClass}">${e.agent_id}</span>
+            <span class="type-badge ${e.entry_type}">${e.entry_type.replace('_',' ')}</span>
+            ${score}
+            <span class="card-time">${time}</span>
+          </div>
+          <div class="card-content">${e.content}</div>
+          <div class="card-tags">${tags}${v}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadTimeline();
+  setInterval(() => { if (!isSearchMode) loadTimeline(); }, 5000);
+</script>
+
+</body>
+</html>

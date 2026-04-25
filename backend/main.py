@@ -67,7 +67,6 @@ def get_memory(entry_id: str = Path(...)):
 
 
 
-
 @app.get("/search", response_model=list[SearchResult], tags=["Memory"])
 def search_memory(
     q: str = Query(...),
@@ -89,14 +88,12 @@ def search_memory(
 
 
 
-
 @app.get("/timeline", response_model=list[SearchResult], tags=["Memory"])
 def get_timeline(
     limit: int = Query(50, ge=1, le=200),
     include_deprecated: bool = Query(True),
 ):
     return MEMORY_STORE.get_all(limit=limit, include_deprecated=include_deprecated)
-
 
 
 
@@ -153,7 +150,6 @@ def update_memory(
     )
     new_id = MEMORY_STORE.update_version(entry_id, new_entry)
     return MemoryEntryResponse(id=new_id, message=f"New version stored. Old entry superseded.")
-
 
 
 
